@@ -20,7 +20,7 @@ public class KafkaConsumerService
     private readonly ConsumerConfig _config = new()
     {
         BootstrapServers = "kafka:9092",
-        GroupId = "debezium-consumer-group",
+        GroupId = "debezium-net-consumer",
         AutoOffsetReset = AutoOffsetReset.Earliest,
         EnableAutoCommit = false,
         MaxPollIntervalMs = 300000,
