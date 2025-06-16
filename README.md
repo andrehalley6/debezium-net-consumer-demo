@@ -64,6 +64,8 @@ CREATE TABLE products (
     price DECIMAL
 );
 INSERT INTO products (name, price) VALUES ('Product A', 100.00);
+INSERT INTO products (name, price) VALUES ('Product B', 75.00);
+INSERT INTO products (name, price) VALUES ('Product C', 55.00);
 ```
 
 #### Then run to enable WAL (Write Ahead Log):
