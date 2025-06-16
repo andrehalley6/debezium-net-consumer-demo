@@ -21,7 +21,7 @@ public class KafkaConsumerService
     {
         BootstrapServers = "kafka:9092",
         GroupId = "debezium-net-consumer",
-        AutoOffsetReset = AutoOffsetReset.Earliest,
+        AutoOffsetReset = AutoOffsetReset.Earliest, // Use "Latest" for latest messages
         EnableAutoCommit = false,
         MaxPollIntervalMs = 300000,
         SessionTimeoutMs = 10000,
@@ -85,7 +85,13 @@ public class KafkaConsumerService
 
         var json = JsonNode.Parse(message);
         var payload = json?["payload"];
+        var source = payload?["source"];
+        var snapshot = source?["snapshot"]?.ToString() ?? "false";
         var op = payload?["op"]?.ToString();
+
+        // Tag snapshot vs live
+        var tag = (snapshot == "true" || snapshot == "last") ? "📦 SNAPSHOT" : "⚡ LIVE";
+        Console.WriteLine($"[{tag}] op={op}");
 
         JsonNode? after = payload?["after"];
         JsonNode? before = payload?["before"];
@@ -98,24 +104,31 @@ public class KafkaConsumerService
             string? value = after?["price"]?["value"]?.ToString();
             decimal price = value != null ? DecodeDecimal(value, scale) : 0;
 
-            if (name.ToLower().Contains("fail"))
-            {
-                throw new Exception($"Simulated failure due to name: '{name}'");
-            }
+            if (name.Contains("fail", StringComparison.OrdinalIgnoreCase))
+                throw new Exception($"Simulated failure due to name '{name}'");
 
-            if (op == "c")
+            if (op == "u" && after != null && before != null)
             {
-                Console.WriteLine($"Created id: {id}, name: {name}, price: {price}");
+                Console.WriteLine($"Updated id={id}, name={name}");
+                PrintDiff(before, after);
             }
-            else if (op == "u")
+            else if (op == "c" && after != null)
             {
-                Console.WriteLine($"Updated id: {id}, name: {name}, price: {price}");
+                Console.WriteLine($"Created id={id}, name={name}, price={price}");
+            }
+            else if (op == "r" && after != null)
+            {
+                Console.WriteLine($"Read id={id}, name={name}, price={price}");
+            }
+            else
+            {
+                Console.WriteLine($"Unhandled op={op}");
             }
         }
         else if (op == "d" && before != null)
         {
             int id = before?["id"]?.GetValue<int>() ?? 0;
-            Console.WriteLine($"Deleted id: {id}");
+            PrintDiff(before, null); 
         }
 
         Console.WriteLine(new string('-', 80));
@@ -133,6 +146,21 @@ public class KafkaConsumerService
         {
             Console.WriteLine($"Error decoding decimal: {base64}, returning 0");
             return 0;
+        }
+    }
+    
+    private void PrintDiff(JsonNode? before, JsonNode? after)
+    {
+        if (before is null || after is null) return;
+
+        foreach (var prop in before.AsObject())
+        {
+            string key = prop.Key;
+            var beforeVal = prop.Value?.ToJsonString();
+            var afterVal  = after[key]?.ToJsonString();
+
+            if (beforeVal != afterVal)
+                Console.WriteLine($"  • {key}: {beforeVal}  →  {afterVal}");
         }
     }
 }
