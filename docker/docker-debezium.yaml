@@ -39,7 +39,7 @@ services:
       - debezium-net
 
   debezium:
-    image: debezium/connect:2.5
+    image: debezium/connect:2.7.3.Final
     container_name: debezium
     ports:
       - "8083:8083"
