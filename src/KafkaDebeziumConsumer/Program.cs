@@ -79,6 +79,13 @@ public class KafkaConsumerService
 
     private void ProcessMessage(string message, TopicPartitionOffset offset)
     {
+        // If message is null or empty then skip it
+        if (string.IsNullOrEmpty(message))
+        {
+            Console.WriteLine("Message is null or empty, skipping.");
+            return;
+        }
+
         Console.WriteLine($"Message at {offset}:");
         Console.WriteLine(message);
         Console.WriteLine(new string('-', 80));
@@ -109,7 +116,7 @@ public class KafkaConsumerService
 
             if (op == "u" && after != null && before != null)
             {
-                Console.WriteLine($"Updated id={id}, name={name}");
+                Console.WriteLine($"Updated id={id}, name={name}, price={price}");
                 PrintDiff(before, after);
             }
             else if (op == "c" && after != null)
@@ -125,10 +132,17 @@ public class KafkaConsumerService
                 Console.WriteLine($"Unhandled op={op}");
             }
         }
-        else if (op == "d" && before != null)
+        else if (op == "d")
         {
-            int id = before?["id"]?.GetValue<int>() ?? 0;
-            PrintDiff(before, null); 
+            if (before != null)
+            {
+                int id = before?["id"]?.GetValue<int>() ?? 0;
+                Console.WriteLine($"Deleted id={id}");
+            }
+            else
+            {
+                Console.WriteLine($"Unhandled deleted op={op}");
+            }
         }
 
         Console.WriteLine(new string('-', 80));

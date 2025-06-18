@@ -90,7 +90,9 @@ services:
           \"table.include.list\": \"public.products\",
           \"slot.name\": \"products_slot\",
           \"topic.prefix\": \"pgdemo\",
-          \"snapshot.mode\": \"initial\"
+          \"snapshot.mode\": \"initial\",
+          \"include.schema.changes\": \"true\",
+          \"message.key.columns\": \"public.products:id\"
         }
       }';
       echo 'Debezium connector registered!'

@@ -6,3 +6,5 @@ CREATE TABLE IF NOT EXISTS products (
 INSERT INTO products (name, price) VALUES ('Product A', 100.00) ON CONFLICT DO NOTHING;
 INSERT INTO products (name, price) VALUES ('Product B', 75.00) ON CONFLICT DO NOTHING;
 INSERT INTO products (name, price) VALUES ('Product C', 55.00) ON CONFLICT DO NOTHING;
+
+ALTER TABLE public.products REPLICA IDENTITY FULL;
