@@ -46,32 +46,7 @@ docker-compose -p debezium-net-demo up --build
 
 This will run all services in Docker
 
-### 3. Register the Debezium Connector
-
-```bash
-curl -X POST http://localhost:8083/connectors \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "postgres-products-connector",
-    "config": {
-      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-      "database.hostname": "postgres",
-      "database.port": "5432",
-      "database.user": "admin",
-      "database.password": "password",
-      "database.dbname": "inventory",
-      "database.server.name": "pgdemo",
-      "plugin.name": "pgoutput",
-      "table.include.list": "public.products",
-      "slot.name": "products_slot",
-      "topic.prefix": "pgdemo"
-    }
-  }'
-```
-
-Once successful, you'll receive a JSON confirmation of the connector.
-
-### 4. Verify Kafka Topics
+### 3. Verify Kafka Topics
 
 ```bash
 docker exec kafka kafka-topics --bootstrap-server localhost:9092 --list
@@ -82,7 +57,7 @@ Search for:
 pgdemo.public.products
 ```
 
-### 5. Test .NET Consumer
+### 4. Test .NET Consumer
 
 In this step, make sure your .NET consumer is running,then you can try adding data, update data, or delete row in table products to check it's working.
 
@@ -92,7 +67,7 @@ If your .NET consumer is not working please restart/start it
 docker-compose -p debezium-net-demo -f up -d consumer
 ```
 
-### 7. Cleanup
+### 5. Cleanup
 
 ```bash
 docker-compose down -v

@@ -60,13 +60,51 @@ services:
       VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
     networks:
       - debezium-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  debezium-init:
+    image: curlimages/curl:latest
+    container_name: debezium-init
+    depends_on:
+      debezium:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+      echo 'Waiting for Debezium to start...';
+      sleep 10;
+      curl -X POST http://debezium:8083/connectors -H 'Content-Type: application/json' -d '{
+        \"name\": \"postgres-products-connector\",
+        \"config\": {
+          \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",
+          \"database.hostname\": \"postgres\",
+          \"database.port\": \"5432\",
+          \"database.user\": \"admin\",
+          \"database.password\": \"password\",
+          \"database.dbname\": \"inventory\",
+          \"database.server.name\": \"pgdemo\",
+          \"plugin.name\": \"pgoutput\",
+          \"table.include.list\": \"public.products\",
+          \"slot.name\": \"products_slot\",
+          \"topic.prefix\": \"pgdemo\",
+          \"snapshot.mode\": \"initial\"
+        }
+      }';
+      echo 'Debezium connector registered!'
+      "
+    networks:
+      - debezium-net
 
   consumer:
     build:
       context: ./src/KafkaDebeziumConsumer
     container_name: consumer
     depends_on:
-      - kafka
+      debezium-init:
+        condition: service_completed_successfully
     environment:
       - DOTNET_ENVIRONMENT=Development
     networks:
